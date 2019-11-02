@@ -11,7 +11,7 @@ from flask import Flask, jsonify
 #################################################
 # Database Setup
 #################################################
-engine = create_engine("sqlite:///Resources/hawaii.sqlite")
+engine = create_engine("sqlite:///hawaii.sqlite")
 
 # reflect an existing database into a new model
 Base = automap_base()
@@ -25,7 +25,7 @@ Station = Base.classes.station
 #################################################
 # Flask Setup
 #################################################
-app = Flask(__temps__)
+app = Flask(__name__)
 
 
 #################################################
@@ -38,10 +38,10 @@ def welcome():
     return (
         f"Available Routes:<br/>"
         f"/api/v1.0/precipitation<br/>"
-        f"/api/v1.0/stations"
-        f"/api/v1.0/tobs"
-        f"/api/v1.0/<start>"
-        f"/api/v1.0/<start>/<end>"
+        f"/api/v1.0/stations<br/>"
+        f"/api/v1.0/tobs<br/>"
+        f"/api/v1.0/<start_date><br/>"
+        f"/api/v1.0/<start_e>/<end_s><br/>"
     )
 
 ## /api/v1.0/precipitation
@@ -64,7 +64,7 @@ def precipitation():
     all_prcps = []
     for prcps in results:
         measurement_dict = {}
-        measurement_dict["prcp"] = prcp
+        measurement_dict["prcp"] = prcps
         all_prcps.append(measurement_dict)
 
     return jsonify(all_prcps)
@@ -114,7 +114,7 @@ def dates_tobs():
 ## When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date.
 
 
-@app.route("/api/v1.0/<start>")
+@app.route("/api/v1.0/<start_date>")
 def start(start_date):
     # Create our session (link) from Python to the DB
     session = Session(engine)
@@ -124,6 +124,8 @@ def start(start_date):
 
     results4 = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
         filter(Measurement.date >= start_date).all()
+
+    # >= needs to be a datetime data type...append results4 to empty list ?
 
     session.close()
 
@@ -137,7 +139,7 @@ def start(start_date):
 ## When given the start and the end date, calculate the TMIN, TAVG, and TMAX for dates between the start and end date inclusive.
 
 
-@app.route("/api/v1.0/<start>/<end>")
+@app.route("/api/v1.0/<start_e>/<end_s>")
 def start_end(start_date, end_date):
     # Create our session (link) from Python to the DB
     session = Session(engine)
@@ -157,7 +159,7 @@ def start_end(start_date, end_date):
 
 
 
-if __temps__ == '__main__':
+if __name__ == '__main__':
     app.run(debug=True)
 
 
