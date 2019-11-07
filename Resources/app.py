@@ -4,6 +4,7 @@ import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
+import datetime
 
 from flask import Flask, jsonify
 
@@ -21,6 +22,7 @@ Base.prepare(engine, reflect=True)
 # Save reference to the table
 Measurement = Base.classes.measurement
 Station = Base.classes.station
+
 
 #################################################
 # Flask Setup
@@ -41,7 +43,7 @@ def welcome():
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
         f"/api/v1.0/<start_date><br/>"
-        f"/api/v1.0/<start_e>/<end_s><br/>"
+        f"/api/v1.0/<start_date>/<end_date><br/>"
     )
 
 ## /api/v1.0/precipitation
@@ -100,7 +102,10 @@ def dates_tobs():
     """Return a list of temperature observation data including dates and tobs"""
     # Query all dates and temperatures
 
-    results3 = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date >= "2016-08-23").filter(Measurement.date <= "2017-08-23").all()
+    results3 = []
+    
+    for items in session.query(Measurement.date, Measurement.tobs).filter(Measurement.date >= "2016-08-23").filter(Measurement.date <= "2017-08-23").all():
+        results3.append(items)
 
     session.close()
 
@@ -122,10 +127,14 @@ def start(start_date):
     """Return a list of temperature observation data including min,max and avg"""
     # Query all min,max and avg for specified start date to the end of the data set (08-23-2017) - no specified end date
 
-    results4 = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-        filter(Measurement.date >= start_date).all()
+    results4 = []
+    
+    for item in session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start_date).filter(func.strftime("%m-%d-%y", Measurement.date) == start_date).all():
 
-    # >= needs to be a datetime data type...append results4 to empty list ?
+        results4.append(item)
+
+# >= needs to be a datetime data type...append results4 to empty list ?
 
     session.close()
 
@@ -139,7 +148,7 @@ def start(start_date):
 ## When given the start and the end date, calculate the TMIN, TAVG, and TMAX for dates between the start and end date inclusive.
 
 
-@app.route("/api/v1.0/<start_e>/<end_s>")
+@app.route("/api/v1.0/<start_date>/<end_date>")
 def start_end(start_date, end_date):
     # Create our session (link) from Python to the DB
     session = Session(engine)
@@ -147,13 +156,17 @@ def start_end(start_date, end_date):
     """Return a list of temperature observation data including min,max and avg"""
     # Query all min, max and avg for specified start and end date
 
-    results5 = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-        filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all()
+    results5 = []
+    
+    for item in session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all():
+
+        results5.append(item)
 
     session.close()
 
     # Convert list of tuples into normal list
-    all_starts_end = list(np.ravel(results5))
+    all_starts_ends = list(np.ravel(results5))
 
     return jsonify(all_starts_ends)
 
