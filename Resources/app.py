@@ -159,7 +159,8 @@ def start_end(start_date, end_date):
     results5 = []
     
     for item in session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-        filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all():
+        filter(Measurement.date >= start_date).filter(func.strftime("%m-%d-%y", Measurement.date) == start_date).filter(Measurement.date <= end_date).\
+        filter(func.strftime("%m-%d-%y", Measurement.date) == end_date)all():
 
         results5.append(item)
 
